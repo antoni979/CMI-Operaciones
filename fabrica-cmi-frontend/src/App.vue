@@ -1,6 +1,8 @@
 <template>
   <div class="flex min-h-screen bg-gray-100 font-sans">
-    <!-- Sidebar de Navegación -->
+    <!-- ============================================= -->
+    <!-- ==== BARRA LATERAL DE NAVEGACIÓN (SIDEBAR) ==== -->
+    <!-- ============================================= -->
     <aside class="w-64 bg-gray-800 text-white flex-shrink-0">
       <div class="p-6 text-2xl font-bold border-b border-gray-700">
         CMI Fábrica
@@ -33,7 +35,15 @@
 </template>
 
 <script setup>
-// No se necesita lógica aquí
+import { onMounted } from 'vue'
+import { useProductionStore } from './stores/productionStore'
+
+// Al montar el componente principal de la app, iniciamos la carga de datos
+// pidiendo los años disponibles. El store se encarga del resto.
+const productionStore = useProductionStore()
+onMounted(() => {
+  productionStore.fetchAvailableYears()
+})
 </script>
 
 <style scoped>
