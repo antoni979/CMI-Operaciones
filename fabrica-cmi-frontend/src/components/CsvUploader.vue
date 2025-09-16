@@ -95,6 +95,7 @@ const processFile = (file) => {
   Papa.parse(file, {
     header: true,
     skipEmptyLines: true,
+    delimiter: ';', // <-- CORRECCIÓN APLICADA: Usa punto y coma como separador
     complete: (results) => {
       const headers = results.meta.fields;
       // Comprobar si todas las cabeceras esperadas están en el archivo

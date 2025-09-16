@@ -65,12 +65,14 @@ const uploadStatus = ref(null)
 
 // Las cabeceras exactas que esperamos en el archivo CSV
 const csvHeaders = [
-  'Fecha SAP', 
-  'Descripción producto', 
-  'Cant notificada', 
-  'Orden', 
-  'KG', 
-  'Tarrinas fabricadas', 
+  'Fecha SAP',
+  'Fruta',
+  'Descripción producto',
+  'Cant notificada',
+  'Orden',
+  'KG Volcados',
+  'KG',
+  'Tarrinas fabricadas',
   'Centro de coste',
   'Horas'
 ];
@@ -87,7 +89,6 @@ const handleDataUpload = async (parsedData) => {
     return;
   }
   
-  // 1. Transformar los datos del CSV al formato de nuestra base de datos
   const formattedData = parsedData.map(row => {
     // Función para convertir fecha de DD.MM.YYYY a YYYY-MM-DD
     const convertDate = (dateStr) => {
@@ -97,29 +98,37 @@ const handleDataUpload = async (parsedData) => {
       return `${parts[2]}-${parts[1]}-${parts[0]}`;
     };
 
-    // Función para convertir comas decimales a puntos
+    // Función robusta para convertir números
     const parseNumeric = (value) => {
-      if (typeof value === 'string') {
-        return parseFloat(value.replace(',', '.'));
+      if (typeof value !== 'string' || !value) return null;
+      try {
+        const cleanedValue = value.replace(/\./g, '').replace(',', '.');
+        const number = parseFloat(cleanedValue);
+        return isNaN(number) ? null : number;
+      } catch (e) {
+        return null;
       }
-      return value;
     };
 
     return {
+      // ===== CORRECCIÓN APLICADA AQUÍ =====
+      producto_ref: row['Descripción producto'], // Usamos la descripción como referencia del producto
+      // ===================================
+      
       fecha_produccion: convertDate(row['Fecha SAP']),
+      fruta: row['Fruta'],
       orden_produccion: row['Orden'],
       descripcion_producto: row['Descripción producto'],
-      cantidad_cajas: parseInt(row['Cant notificada'], 10),
-      unidades_fabricadas: parseInt(row['Tarrinas fabricadas'], 10),
+      cantidad_cajas: parseInt(row['Cant notificada'], 10) || 0,
+      unidades_fabricadas: parseInt(row['Tarrinas fabricadas'], 10) || 0,
+      kg_volcados: parseNumeric(row['KG Volcados']),
       kg_producidos: parseNumeric(row['KG']),
       centro_coste: row['Centro de coste'],
       horas_produccion: parseNumeric(row['Horas']),
-      // Dejamos fecha_caducidad como null por ahora, ya que no viene en el excel
-      fecha_caducidad: null 
+      fecha_caducidad: null // No viene en el excel
     };
   });
   
-  // 2. Enviar los datos transformados a Supabase a través del store
   const result = await store.addProductionBatch(formattedData)
   
   if (result.success) {
